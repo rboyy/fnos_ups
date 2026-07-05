@@ -1,0 +1,62 @@
+[
+    {
+        "stepTitle": "欢迎安装 UPS 看门狗",
+        "items": [
+            {
+                "type": "tips",
+                "helpText": "非智能UPS断电保护方案（原生应用，无需Docker）。通过Ping局域网设备检测市电状态，断电时自动安全关机。"
+            },
+            {
+                "type": "tips",
+                "helpText": "原理：停电时路由器也会断电，因此Ping路由器不通即可判定市电中断。"
+            }
+        ]
+    },
+    {
+        "stepTitle": "监控目标配置",
+        "items": [
+            {
+                "type": "tips",
+                "helpText": "设置默认监控目标IP，建议使用路由器网关（如 192.168.1.1）。安装后可在Web界面添加更多。"
+            },
+            {
+                "type": "text",
+                "field": "wizard_default_target",
+                "label": "监控目标IP",
+                "initValue": "192.168.1.1",
+                "placeholder": "路由器网关IP",
+                "rules": [
+                    {"required": true, "message": "请输入监控目标IP"}
+                ]
+            },
+            {
+                "type": "text",
+                "field": "wizard_default_target_name",
+                "label": "目标名称",
+                "initValue": "路由器"
+            },
+            {
+                "type": "text",
+                "field": "wizard_ping_interval",
+                "label": "检测间隔(秒)",
+                "initValue": "10",
+                "rules": [
+                    {"required": true, "message": "请输入检测间隔"}
+                ]
+            },
+            {
+                "type": "text",
+                "field": "wizard_failure_threshold",
+                "label": "失败阈值(次)",
+                "initValue": "6",
+                "rules": [
+                    {"required": true, "message": "请输入失败阈值"}
+                ]
+            },
+            {
+                "type": "tips",
+                "helpText": "默认: 检测间隔10秒 x 失败阈值6次 = 连续60秒无响应后关机。"
+            }
+        ]
+    }
+]

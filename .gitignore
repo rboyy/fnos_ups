@@ -1,0 +1,17 @@
+# Build artifacts
+*.tgz
+*.fpk
+app.tgz
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# macOS
+.DS_Store
+._*
+
+# IDE
+.vscode/
+.idea/

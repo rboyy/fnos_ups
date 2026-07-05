@@ -1,0 +1,11 @@
+[
+    {
+        "stepTitle": "升级 UPS 看门狗",
+        "items": [
+            {
+                "type": "tips",
+                "helpText": "升级到最新版本，配置数据将被保留。"
+            }
+        ]
+    }
+]

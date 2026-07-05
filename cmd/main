@@ -1,0 +1,105 @@
+#!/bin/bash
+
+CMD="${TRIM_APPDEST}/bin/main.py"
+LOG_FILE="${TRIM_PKGVAR}/info.log"
+PID_FILE="${TRIM_PKGVAR}/data/app.pid"
+DATA_DIR="${TRIM_PKGVAR}/data"
+
+# 确保数据目录存在
+mkdir -p "$DATA_DIR"
+
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
+
+start_process() {
+    if status; then
+        return 0
+    fi
+
+    log_msg "Starting ups-watchdog ..."
+    export UPS_APP_DIR="$(cd "$(dirname "$CMD")" && cd .. && pwd)"
+    export UPS_DATA_DIR="$DATA_DIR"
+    log_msg "APP_DIR=$UPS_APP_DIR DATA_DIR=$UPS_DATA_DIR"
+
+    python3 "$CMD" >> "$LOG_FILE" 2>&1 &
+    echo $! > "$PID_FILE"
+    log_msg "Process started with PID=$!"
+    return 0
+}
+
+stop_process() {
+    log_msg "Stopping ups-watchdog ..."
+
+    local pid=""
+    if [ -r "$PID_FILE" ]; then
+        pid=$(head -n 1 "$PID_FILE" | tr -d '[:space:]')
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            log_msg "Sending TERM to PID $pid"
+            kill -TERM "$pid" 2>/dev/null
+
+            local count=0
+            while kill -0 "$pid" 2>/dev/null && [ $count -lt 10 ]; do
+                sleep 1
+                count=$((count + 1))
+            done
+
+            if kill -0 "$pid" 2>/dev/null; then
+                log_msg "Sending KILL to PID $pid"
+                kill -KILL "$pid" 2>/dev/null
+                sleep 1
+            fi
+        fi
+        rm -f "$PID_FILE"
+    fi
+
+    # 兜底：按进程名查杀
+    pid=$(ps aux | grep -v grep | grep "main.py" | grep "ups-watchdog" | awk '{print $2}' | head -1)
+    if [ -z "$pid" ]; then
+        pid=$(ps aux | grep -v grep | grep "[m]ain.py" | grep "$TRIM_APPDEST" | awk '{print $2}' | head -1)
+    fi
+    if [ -n "$pid" ]; then
+        kill -KILL "$pid" 2>/dev/null
+    fi
+
+    log_msg "Process stopped"
+    return 0
+}
+
+status() {
+    if [ -f "$PID_FILE" ]; then
+        local pid=$(head -n 1 "$PID_FILE" | tr -d '[:space:]')
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+        rm -f "$PID_FILE"
+    fi
+
+    # 兜底查找
+    local pid=$(ps aux | grep -v grep | grep "[m]ain.py" | grep "$TRIM_APPDEST" | awk '{print $2}' | head -1)
+    if [ -n "$pid" ]; then
+        echo "$pid" > "$PID_FILE"
+        return 0
+    fi
+
+    return 1
+}
+
+case $1 in
+start)
+    start_process
+    ;;
+stop)
+    stop_process
+    ;;
+status)
+    if status; then
+        exit 0
+    else
+        exit 3
+    fi
+    ;;
+*)
+    exit 1
+    ;;
+esac

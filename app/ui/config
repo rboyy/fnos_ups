@@ -1,0 +1,17 @@
+{
+    ".url": {
+        "ups-watchdog.Application": {
+            "title": "UPS 看门狗",
+            "desc": "非智能UPS断电保护",
+            "icon": "images/icon_{0}.png",
+            "type": "url",
+            "protocol": "http",
+            "port": "5080",
+            "url": "/",
+            "allUsers": true,
+            "control": {
+                "portPerm": "editable"
+            }
+        }
+    }
+}

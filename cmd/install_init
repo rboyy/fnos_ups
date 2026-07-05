@@ -1,0 +1,15 @@
+#!/bin/bash
+mkdir -p "${TRIM_PKGVAR}/data"
+if [ ! -f "${TRIM_PKGVAR}/data/config.json" ]; then
+    cat > "${TRIM_PKGVAR}/data/config.json" << 'EOF'
+{
+  "targets": [],
+  "ping_interval": 10,
+  "ping_timeout": 3,
+  "failure_threshold": 6,
+  "shutdown_delay": 30,
+  "all_must_fail": true
+}
+EOF
+fi
+exit 0

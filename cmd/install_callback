@@ -1,0 +1,39 @@
+#!/bin/bash
+
+CONFIG_FILE="${TRIM_PKGVAR}/data/config.json"
+
+# 将安装向导中用户填写的配置写入 config.json
+# 注意: wizard 变量是 shell 变量，需要直接用 $ 替换传进 python
+if [ -n "${wizard_default_target}" ]; then
+    python3 -c "
+import json
+
+config_file = '${CONFIG_FILE}'
+try:
+    with open(config_file, 'r') as f:
+        cfg = json.load(f)
+except:
+    cfg = {}
+
+target_ip = '${wizard_default_target}'.strip()
+target_name = '${wizard_default_target_name}'.strip() or target_ip
+ping_interval = '${wizard_ping_interval}'.strip()
+failure_threshold = '${wizard_failure_threshold}'.strip()
+
+if target_ip:
+    cfg['targets'] = [{'ip': target_ip, 'name': target_name, 'enabled': True}]
+
+cfg['ping_interval'] = int(ping_interval) if ping_interval.isdigit() else 10
+cfg['failure_threshold'] = int(failure_threshold) if failure_threshold.isdigit() else 6
+cfg.setdefault('ping_timeout', 3)
+cfg.setdefault('shutdown_delay', 30)
+cfg.setdefault('all_must_fail', True)
+
+with open(config_file, 'w') as f:
+    json.dump(cfg, f, indent=2, ensure_ascii=False)
+
+print('Wizard config written:', json.dumps(cfg, ensure_ascii=False))
+"
+fi
+
+exit 0

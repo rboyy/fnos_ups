@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPS 看门狗</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- 顶栏 -->
+        <header class="header">
+            <div class="header-left">
+                <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                    <path d="M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2"/>
+                    <line x1="12" y1="11" x2="12" y2="17"/>
+                    <line x1="9" y1="14" x2="15" y2="14"/>
+                </svg>
+                <h1>UPS 看门狗</h1>
+            </div>
+            <div class="header-right">
+                <span class="version" id="version">v1.0.0</span>
+                <button class="btn btn-icon" id="btnRefresh" title="刷新">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
+                        <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- 状态栏 -->
+        <section class="status-bar" id="statusBar">
+            <div class="status-indicator" id="powerIndicator">
+                <span class="dot"></span>
+                <span class="label">检测中...</span>
+            </div>
+            <div class="status-stats">
+                <span id="statChecks">检测: 0</span>
+                <span id="statFails">失败: 0</span>
+                <span id="statConsec">连续: 0</span>
+                <span id="statLastCheck">最后检测: -</span>
+            </div>
+        </section>
+
+        <!-- 主内容 -->
+        <main class="main">
+            <!-- 左列：目标 + 配置 -->
+            <div class="col-left">
+                <!-- 监控目标 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>监控目标</h2>
+                        <button class="btn btn-primary btn-sm" id="btnAddTarget">+ 添加</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="targetList" class="target-list">
+                            <div class="empty-state">暂无监控目标，请添加</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设置 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>设置</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="configForm" class="form">
+                            <div class="form-group">
+                                <label for="pingInterval">检测间隔（秒）</label>
+                                <input type="number" id="pingInterval" min="3" max="300" value="10">
+                                <small>每隔多少秒 Ping 一次目标设备</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="pingTimeout">Ping 超时（秒）</label>
+                                <input type="number" id="pingTimeout" min="1" max="10" value="3">
+                                <small>单次 Ping 的超时时间</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="failThreshold">失败阈值（次）</label>
+                                <input type="number" id="failThreshold" min="1" max="60" value="6">
+                                <small>连续失败多少次后触发关机</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="shutdownDelay">关机延迟（秒）</label>
+                                <input type="number" id="shutdownDelay" min="0" max="120" value="30">
+                                <small>关机前等待时间，用于数据同步</small>
+                            </div>
+                            <div class="form-group form-check">
+                                <label>
+                                    <input type="checkbox" id="allMustFail" checked>
+                                    全部目标不通才关机
+                                </label>
+                                <small>关闭则任一目标不通即触发</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右列：日志 + 操作 -->
+            <div class="col-right">
+                <!-- 日志 -->
+                <div class="card card-log">
+                    <div class="card-header">
+                        <h2>运行日志</h2>
+                        <div class="card-actions">
+                            <label class="auto-scroll-label">
+                                <input type="checkbox" id="autoScroll" checked> 自动滚动
+                            </label>
+                            <button class="btn btn-sm" id="btnClearLog">清空</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <pre id="logViewer" class="log-viewer">加载中...</pre>
+                    </div>
+                </div>
+
+                <!-- 危险操作 -->
+                <div class="card card-danger">
+                    <div class="card-header">
+                        <h2>紧急操作</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="hint">当确认需要手动关机时，系统将执行安全关机流程。</p>
+                        <button class="btn btn-danger" id="btnShutdown">手动触发关机</button>
+                        <button class="btn btn-warning" id="btnCancelShutdown" style="display:none">取消关机</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 添加目标弹窗 -->
+        <div class="modal" id="modalAddTarget">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加监控目标</h3>
+                    <button class="btn btn-icon modal-close">&times;</button>
+                </div>
+                <form id="addTargetForm" class="form">
+                    <div class="form-group">
+                        <label for="targetIp">IP 地址</label>
+                        <input type="text" id="targetIp" placeholder="192.168.1.1" required
+                               pattern="^(\d{1,3}\.){3}\d{1,3}$">
+                    </div>
+                    <div class="form-group">
+                        <label for="targetName">名称（可选）</label>
+                        <input type="text" id="targetName" placeholder="路由器">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn modal-cancel-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

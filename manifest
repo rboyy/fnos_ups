@@ -1,0 +1,16 @@
+appname               = ups-watchdog
+version               = 1.0.0
+desc                  = 非智能UPS断电保护，Ping局域网设备检测市电，断电自动安全关机保护硬盘数据。
+platform              = x86
+maintainer            = hurui
+maintainer_url        = https://github.com/hurui
+distributor           = hurui
+distributor_url       = https://github.com/hurui
+os_min_ver            = 0.8.0
+display_name          = UPS看门狗
+desktop_appname       = ups-watchdog.Application
+desktop_uidir         = ui
+desktop_applaunchname =
+source                = thirdparty
+service_port          = 5080
+checkport             = true
