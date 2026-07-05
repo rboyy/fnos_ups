@@ -109,11 +109,6 @@ function updateStatusBar(status) {
     if (status.version) {
         document.getElementById('version').textContent = `v${status.version}`;
     }
-
-    // 显示/隐藏取消关机按钮
-    const triggerExists = status.message && status.message.includes('关机');
-    document.getElementById('btnCancelShutdown').style.display =
-        (status.power_ok === false) ? 'inline-flex' : 'none';
 }
 
 // --- Targets ---
@@ -198,14 +193,17 @@ function populateConfigForm(cfg) {
 // --- Logs ---
 async function refreshLogs() {
     try {
-        const data = await apiGet(`${API.logs}?lines=200`);
+        const data = await apiGet(`${API.logs}?lines=500`);
         const viewer = document.getElementById('logViewer');
         const autoScroll = document.getElementById('autoScroll').checked;
         const lines = data.lines || [];
         viewer.textContent = lines.join('\n') || '暂无日志';
 
+        // 必须在 DOM 更新后再设置滚动位置
         if (autoScroll) {
-            viewer.scrollTop = viewer.scrollHeight;
+            requestAnimationFrame(() => {
+                viewer.scrollTop = viewer.scrollHeight;
+            });
         }
     } catch (e) {
         console.error('获取日志失败:', e);
@@ -277,29 +275,6 @@ async function saveConfig() {
     }
 }
 
-async function triggerShutdown() {
-    const input = prompt('确认要手动关机吗？请输入 SHUTDOWN 以确认：');
-    if (input !== 'SHUTDOWN') {
-        toast('已取消', 'warning');
-        return;
-    }
-    try {
-        await apiPost(API.shutdown, { confirm: 'SHUTDOWN' });
-        toast('关机指令已发送', 'warning', 5000);
-    } catch (e) {
-        toast(e.message, 'error');
-    }
-}
-
-async function cancelShutdown() {
-    try {
-        await apiPost(`${API.shutdown}/cancel`);
-        toast('已取消关机');
-    } catch (e) {
-        toast(e.message, 'error');
-    }
-}
-
 async function clearLogs() {
     if (!confirm('确定要清空所有日志吗？')) return;
     try {
@@ -332,8 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshLogs();
         toast('已刷新');
     });
-    document.getElementById('btnShutdown').addEventListener('click', triggerShutdown);
-    document.getElementById('btnCancelShutdown').addEventListener('click', cancelShutdown);
     document.getElementById('btnClearLog').addEventListener('click', clearLogs);
 
     // Modal 事件

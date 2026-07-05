@@ -169,19 +169,6 @@ body {
     padding: 0;
 }
 
-.card-danger {
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-.card-danger .card-header {
-    background: var(--danger-bg);
-    border-bottom-color: rgba(239, 68, 68, 0.2);
-}
-
-.card-danger .card-header h2 {
-    color: var(--danger);
-}
-
 /* === Target List === */
 .target-list {
     display: flex;
@@ -370,7 +357,8 @@ body {
     font-size: 12px;
     line-height: 1.7;
     padding: 12px 16px;
-    max-height: 400px;
+    max-height: 600px;
+    min-height: 400px;
     overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-all;
