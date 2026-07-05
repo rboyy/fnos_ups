@@ -167,8 +167,8 @@ def watchdog_loop():
         if any_ok:
             fails = 0
             set_status(power_ok=True, consecutive_fails=0, last_success=now_str(), message="市电正常")
-            # 每 10 次检测记录一次正常状态日志
-            if check_count % 10 == 0:
+            # 每 5 次检测记录一次正常状态日志
+            if check_count % 5 == 0:
                 ok_targets = [f"{t['name']}({t['ip']})" for t in results if t.get('success')]
                 log.info("检测正常 [%d次] 可达：%s", check_count, ", ".join(ok_targets) or "无")
         else:
