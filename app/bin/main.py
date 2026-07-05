@@ -137,6 +137,7 @@ def watchdog_loop():
     log.info("看门狗守护线程启动")
     fails = 0
     last_reload = 0
+    check_count = 0
     while not stop_event.is_set():
         now = time.time()
         if now - last_reload > 30:
@@ -161,9 +162,15 @@ def watchdog_loop():
             status_data["last_check"] = now_str()
             status_data["targets"] = results
 
+        check_count += 1
+
         if any_ok:
             fails = 0
             set_status(power_ok=True, consecutive_fails=0, last_success=now_str(), message="市电正常")
+            # 每 10 次检测记录一次正常状态日志
+            if check_count % 10 == 0:
+                ok_targets = [f"{t['name']}({t['ip']})" for t in results if t.get('success')]
+                log.info("检测正常 [%d次] 可达：%s", check_count, ", ".join(ok_targets) or "无")
         else:
             fails += 1
             set_status(consecutive_fails=fails, last_fail=now_str(),
